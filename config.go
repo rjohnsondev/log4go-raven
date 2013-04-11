@@ -112,6 +112,8 @@ func (log Logger) LoadConfiguration(filename string) {
 			filt, good = xmlToXMLLogWriter(filename, xmlfilt.Property, enabled)
 		case "socket":
 			filt, good = xmlToSocketLogWriter(filename, xmlfilt.Property, enabled)
+		case "raven":
+			filt, good = xmlToRavenLogWriter(filename, xmlfilt.Property, enabled)
 		default:
 			fmt.Fprintf(os.Stderr, "LoadConfiguration: Error: Could not load XML configuration in %s: unknown filter type \"%s\"\n", filename, xmlfilt.Type)
 			os.Exit(1)
@@ -285,4 +287,31 @@ func xmlToSocketLogWriter(filename string, props []xmlProperty, enabled bool) (S
 	}
 
 	return NewSocketLogWriter(protocol, endpoint), true
+}
+
+func xmlToRavenLogWriter(filename string, props []xmlProperty, enabled bool) (RavenLogWriter, bool) {
+	dsn := ""
+
+	// Parse properties
+	for _, prop := range props {
+		switch prop.Name {
+		case "dsn":
+			dsn = strings.Trim(prop.Value, " \r\n")
+		default:
+			fmt.Fprintf(os.Stderr, "LoadConfiguration: Warning: Unknown property \"%s\" for file filter in %s\n", prop.Name, filename)
+		}
+	}
+
+	// Check properties
+	if len(dsn) == 0 {
+		fmt.Fprintf(os.Stderr, "LoadConfiguration: Error: Required property \"%s\" for file filter missing in %s\n", "dsn", filename)
+		return nil, false
+	}
+
+	// If it's disabled, we're just checking syntax
+	if !enabled {
+		return nil, true
+	}
+
+	return NewRavenLogWriter(dsn), true
 }

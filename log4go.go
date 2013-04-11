@@ -52,6 +52,7 @@ import (
 	"time"
 	"strings"
 	"runtime"
+    "runtime/debug"
 )
 
 // Version information
@@ -105,6 +106,7 @@ type LogRecord struct {
 	Created time.Time // The time at which the log message was created (nanoseconds)
 	Source  string    // The message source
 	Message string    // The log message
+    Stack   []byte
 }
 
 /****** LogWriter ******/
@@ -213,6 +215,7 @@ func (log Logger) intLogf(lvl level, format string, args ...interface{}) {
 		Created: time.Now(),
 		Source:  src,
 		Message: msg,
+        Stack:   debug.Stack(),
 	}
 
 	// Dispatch the logs
@@ -252,6 +255,7 @@ func (log Logger) intLogc(lvl level, closure func() string) {
 		Created: time.Now(),
 		Source:  src,
 		Message: closure(),
+        Stack:   debug.Stack(),
 	}
 
 	// Dispatch the logs
@@ -284,6 +288,7 @@ func (log Logger) Log(lvl level, source, message string) {
 		Created: time.Now(),
 		Source:  source,
 		Message: message,
+        Stack:   debug.Stack(),
 	}
 
 	// Dispatch the logs

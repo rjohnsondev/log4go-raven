@@ -7,7 +7,7 @@ import (
 	"fmt"
     "strings"
     "os"
-    "github.com/endeveit/raven-go/raven"
+    "github.com/rjohnsondev/raven-go/raven"
 )
 
 // This is the standard writer that prints to standard output.

@@ -44,4 +44,10 @@
     <property name="endpoint">192.168.1.255:12124</property> <!-- recommend UDP broadcast -->
     <property name="protocol">udp</property> <!-- tcp or udp -->
   </filter>
+    <filter enabled="false">
+        <tag>ravenlog</tag>
+        <type>raven</type>
+        <level>FINEST</level>
+        <property name="dsn">https://asdf:asdf@hostname/sentry/1</property>
+    </filter>
 </logging>

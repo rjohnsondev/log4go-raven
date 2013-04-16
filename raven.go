@@ -7,12 +7,19 @@ import (
 	"fmt"
     "strings"
     "os"
+    "runtime"
     "github.com/rjohnsondev/raven-go/raven"
 )
 
 var (
     // number of simultaneous requests to send through to sentry
     RavenConcurrencyLevel = 32
+    // Max size of buffer
+    RavenLogBufferLength = 10000
+    // When the buffer gets to this size, don't attempt to log any more
+    // for safety this should be set to RavenLogBufferLength - number of threads
+    // logging.  TODO: something more elegant
+    RavenLogBufferThreshold = RavenLogBufferLength - (runtime.NumCPU() * 2)
 )
 
 // This is the standard writer that prints to standard output.
@@ -25,7 +32,7 @@ func NewRavenLogWriter(dsn string) RavenLogWriter {
 		fmt.Fprintf(os.Stderr, "Unable to determine hostname, logging to root\n")
     }
 
-	w := RavenLogWriter(make(chan *LogRecord, LogBufferLength))
+	w := RavenLogWriter(make(chan *LogRecord, RavenLogBufferLength))
 
     for x := 0; x < RavenConcurrencyLevel; x++ {
         go ravenLogWorker(w, dsn, hostname)
@@ -78,6 +85,11 @@ func ravenLogWorker(w RavenLogWriter, dsn string, hostname string) {
 // This is the ConsoleLogWriter's output method.  This will block if the output
 // buffer is full.
 func (w RavenLogWriter) LogWrite(rec *LogRecord) {
+    l := len(w)
+    if l > RavenLogBufferThreshold {
+        fmt.Fprintf(os.Stderr, "Raven buffer size now %v, refusing to log to sentry: %v\n", l, rec.Message)
+        return
+    }
 	w <- rec
 }
 
